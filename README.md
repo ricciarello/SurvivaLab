@@ -4,6 +4,8 @@
 
 App Streamlit per survival analysis interattiva — data quality check, curve KM stratificate, log-rank test, download PNG alta risoluzione.
 
+Puoi visitarlo qui 👉🏻 [SurvivaLab](https://ricciarello-survivalab.streamlit.app/)
+
 ## Funzionalità
 
 - **Data Quality Check** automatico (duplicati, mancanti, valori negativi, validità EVENT)
