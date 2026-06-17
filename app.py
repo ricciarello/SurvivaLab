@@ -26,7 +26,7 @@ st.set_page_config(page_title="SurvivaLab", page_icon="📈", layout="wide")
 
 # ── LIGHT MODE TOGGLE ─────────────────────────────────────────────────────────
 
-light_mode = st.sidebar.toggle("☀️ Light mode", value=False)
+light_mode = False
 
 BG_PAGE   = "#ffffff" if light_mode else "#0f0f1a"
 BG_FIG    = "#ffffff" if light_mode else "#0f0f1a"
@@ -74,7 +74,7 @@ html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
 """, unsafe_allow_html=True)
 
 # Hero
-st.markdown('<div class="hero-title">SurvivaLab</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-title">SurvivaLab 📈</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="hero-desc">Carica un CSV · Scegli le colonne · Ottieni curve di sopravvivenza pronte da pubblicare.</div>', unsafe_allow_html=True)
 st.markdown("<h2 style='text-align:center;margin-top:-1rem;'>📈</h2>", unsafe_allow_html=True)
 
@@ -278,6 +278,7 @@ with st.expander("🎨 Opzioni grafico"):
     with col_o1:
         show_ci      = st.toggle("Banda CI 95%", value=True)
         show_censors = st.toggle("Mostra censure ( | )", value=True)
+        light_mode   = st.toggle("☀️ Light mode", value=False)
     with col_o2:
         show_at_risk = st.toggle("Tabella at-risk", value=False)
         show_median  = st.toggle("Linea mediana", value=True)
