@@ -26,7 +26,7 @@ st.set_page_config(page_title="SurvivaLab", page_icon="📈", layout="wide")
 
 # ── LIGHT MODE TOGGLE ─────────────────────────────────────────────────────────
 
-light_mode = False
+light_mode = st.session_state.get("light_mode", False)
 
 BG_PAGE   = "#ffffff" if light_mode else "#0f0f1a"
 BG_FIG    = "#ffffff" if light_mode else "#0f0f1a"
@@ -278,7 +278,7 @@ with st.expander("🎨 Opzioni grafico"):
     with col_o1:
         show_ci      = st.toggle("Banda CI 95%", value=True)
         show_censors = st.toggle("Mostra censure ( | )", value=True)
-        light_mode   = st.toggle("☀️ Light mode", value=False)
+        light_mode   = st.toggle("☀️ Light mode", value=light_mode, key="light_mode")
     with col_o2:
         show_at_risk = st.toggle("Tabella at-risk", value=False)
         show_median  = st.toggle("Linea mediana", value=True)
