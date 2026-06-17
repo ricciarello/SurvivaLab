@@ -353,7 +353,7 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
     # else:
     #     fig, ax = plt.subplots(figsize=(12, 7), facecolor=BG_FIG)
 
-if show_at_risk:
+    if show_at_risk:
         # Leggi le xlim DOPO tight_layout, così sono definitive
         xlim = ax.get_xlim()
 
