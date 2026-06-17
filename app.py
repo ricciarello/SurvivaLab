@@ -342,16 +342,59 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
     T = df_clean[time_col]
     E = df_clean[event_col]
 
-    if show_at_risk:
-        fig, (ax, ax_risk) = plt.subplots(
-            2, 1, figsize=(12, 10),
-            facecolor=BG_FIG,
-            gridspec_kw={"height_ratios": [4, 1], "hspace": 0.05}
-        )
-        ax_risk.set_facecolor(BG_FIG)
-        ax_risk.axis("off")
-    else:
-        fig, ax = plt.subplots(figsize=(12, 7), facecolor=BG_FIG)
+    # if show_at_risk:
+    #     fig, (ax, ax_risk) = plt.subplots(
+    #         2, 1, figsize=(12, 10),
+    #         facecolor=BG_FIG,
+    #         gridspec_kw={"height_ratios": [4, 1], "hspace": 0.05}
+    #     )
+    #     ax_risk.set_facecolor(BG_FIG)
+    #     ax_risk.axis("off")
+    # else:
+    #     fig, ax = plt.subplots(figsize=(12, 7), facecolor=BG_FIG)
+
+           if show_at_risk:
+                   # Leggi le xlim DOPO tight_layout, così sono definitive
+                   xlim = ax.get_xlim()
+           
+                   # Usa i tick effettivi dell'asse X come timepoints
+                   xticks = [t for t in ax.get_xticks() if xlim[0] <= t <= xlim[1]]
+                   if len(xticks) < 2:
+                       xticks = np.linspace(xlim[0], xlim[1], 7)
+                   timepoints = [int(t) for t in xticks]
+           
+                   n_groups = max(len(kmf_list), 1)
+           
+                   ax_risk.set_xlim(xlim)
+                   ax_risk.set_ylim(-n_groups - 0.5, 0.5)
+                   ax_risk.set_facecolor(BG_FIG)
+                   ax_risk.axis("off")
+           
+                   # Header timepoints
+                   for tp in timepoints:
+                       x_norm = (tp - xlim[0]) / (xlim[1] - xlim[0])
+                       ax_risk.text(x_norm, 0.95, str(tp),
+                                    transform=ax_risk.transAxes,
+                                    ha="center", va="top", fontsize=8, color=COL_SUBTEXT)
+           
+                   # Righe per gruppo
+                   for row_idx, (kmf_obj, grp_lbl, color) in enumerate(kmf_list):
+                       y_norm = 1.0 - (row_idx + 1) * (1.0 / (n_groups + 1))
+                       ax_risk.text(-0.01, y_norm, grp_lbl[:14],
+                                    transform=ax_risk.transAxes,
+                                    ha="right", va="center", fontsize=8,
+                                    color=color, fontweight="600")
+                       for tp in timepoints:
+                           n_at_risk = int((kmf_obj.durations >= tp).sum())
+                           x_norm    = (tp - xlim[0]) / (xlim[1] - xlim[0])
+                           ax_risk.text(x_norm, y_norm, str(n_at_risk),
+                                        transform=ax_risk.transAxes,
+                                        ha="center", va="center", fontsize=9,
+                                        color=color, fontweight="700")
+           
+                   # Togli la label "Tempo" dall'asse principale per evitare sovrapposizione
+                   ax.set_xlabel("")
+                   ax_risk.set_xlabel(xlabel_input, fontsize=13, labelpad=10, color=COL_TEXT)
 
     style_axes(ax, light_mode)
 
