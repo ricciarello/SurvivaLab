@@ -97,6 +97,18 @@ if os.path.exists(_SAMPLE_PATH):
     _badge_text   = "#333333" if light_mode else "#cccccc"
     _badge_hint   = "#888888" if light_mode else "#666688"
 
+if os.path.exists(_SAMPLE_PATH):
+    with open(_SAMPLE_PATH, "rb") as _f:
+        _sample_bytes = _f.read()
+
+    import base64
+    _b64 = base64.b64encode(_sample_bytes).decode()
+
+    _badge_bg     = "#f0f0f0" if light_mode else "#1a1a2e"
+    _badge_border = "#cccccc" if light_mode else "#2e2e4e"
+    _badge_text   = "#333333" if light_mode else "#cccccc"
+    _badge_hint   = "#888888" if light_mode else "#666688"
+
     st.markdown(
         f"""
         <style>
@@ -104,7 +116,7 @@ if os.path.exists(_SAMPLE_PATH):
             display: flex;
             align-items: center;
             gap: 10px;
-            margin: 6px 0 4px 0;
+            margin: 6px 0 12px 0;
         }}
         .sample-badge {{
             display: inline-flex;
@@ -116,13 +128,23 @@ if os.path.exists(_SAMPLE_PATH):
             padding: 7px 14px;
             font-size: 0.85rem;
             color: {_badge_text};
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }}
-        .sample-badge:hover {{
-            border-color: #636EFA;
-            box-shadow: 0 0 0 2px rgba(99,110,250,0.15);
         }}
         .sample-badge .icon {{ font-size: 1.1rem; }}
+        .dl-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: {_badge_bg};
+            border: 1.5px solid {_badge_border};
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            color: {_badge_text};
+            text-decoration: none;
+            font-weight: 600;
+            transition: border-color 0.2s;
+        }}
+        .dl-link:hover {{ border-color: #636EFA; color: #636EFA; }}
         .sample-hint {{
             font-size: 0.78rem;
             color: {_badge_hint};
@@ -134,19 +156,22 @@ if os.path.exists(_SAMPLE_PATH):
                 <span class="icon">📊</span>
                 <strong>sample_data.csv</strong>
             </span>
-            <span class="sample-hint">← scarica e trascina nel box qui sopra per testare</span>
+            <a class="dl-link" href="data:text/csv;base64,{_b64}" download="sample_data.csv">
+                ⬇️ Scarica
+            </a>
+            <span class="sample-hint">← trascinalo nel box qui sopra per testare</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.download_button(
-        label="⬇️ Scarica sample_data.csv",
-        data=_sample_bytes,
-        file_name="sample_data.csv",
-        mime="text/csv",
-        key="download_sample",
-    )
+    # st.download_button(
+    #     label="⬇️ Scarica sample_data.csv",
+    #     data=_sample_bytes,
+    #     file_name="sample_data.csv",
+    #     mime="text/csv",
+    #     key="download_sample",
+    # )
 
 # ── STOP SE NESSUN FILE ───────────────────────────────────────────────────────
 
