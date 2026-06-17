@@ -10,19 +10,22 @@ from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.statistics import logrank_test, multivariate_logrank_test
 from io import BytesIO
 import warnings
+import os
 warnings.filterwarnings("ignore")
 
 # ── PALETTE ───────────────────────────────────────────────────────────────────
+
 PALETTE = ["#636EFA", "#EF553B", "#00CC96", "#FFB703", "#AB63FA",
            "#FFA15A", "#19D3F3", "#FF6692", "#B6E880", "#FF97FF"]
-
 PALETTE_LIGHT = ["#2B4EFF", "#CC2200", "#009966", "#CC8800", "#7733CC",
                  "#CC5500", "#0099BB", "#CC3366", "#669900", "#CC44CC"]
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
+
 st.set_page_config(page_title="SurvivaLab", page_icon="📈", layout="wide")
 
 # ── LIGHT MODE TOGGLE ─────────────────────────────────────────────────────────
+
 light_mode = st.sidebar.toggle("☀️ Light mode", value=False)
 
 BG_PAGE   = "#ffffff" if light_mode else "#0f0f1a"
@@ -40,13 +43,13 @@ COL_LEG_EC= "#cccccc" if light_mode else "#333333"
 COL_LEG_L = "#111111" if light_mode else "#cccccc"
 CURR_PALETTE = PALETTE_LIGHT if light_mode else PALETTE
 
-hero_color = "#2B4EFF, #009966" if light_mode else "#636EFA, #00CC96"
-desc_color = "#555" if light_mode else "#aaa"
-check_ok   = "#007744" if light_mode else "#00CC96"
-check_warn = "#AA6600" if light_mode else "#FFB703"
-check_err  = "#CC2200" if light_mode else "#EF553B"
-footer_col = "#888" if light_mode else "#555"
-gh_col     = "#444" if light_mode else "#aaa"
+hero_color  = "#2B4EFF, #009966" if light_mode else "#636EFA, #00CC96"
+desc_color  = "#555" if light_mode else "#aaa"
+check_ok    = "#007744" if light_mode else "#00CC96"
+check_warn  = "#AA6600" if light_mode else "#FFB703"
+check_err   = "#CC2200" if light_mode else "#EF553B"
+footer_col  = "#888" if light_mode else "#555"
+gh_col      = "#444" if light_mode else "#aaa"
 
 st.markdown(f"""
 <style>
@@ -70,16 +73,85 @@ html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
 </style>
 """, unsafe_allow_html=True)
 
-# Hero — testo puro, niente emoji nel div CSS (fix rendering blu)
+# Hero
 st.markdown('<div class="hero-title">SurvivaLab</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="hero-desc">Carica un CSV · Scegli le colonne · Ottieni curve di sopravvivenza pronte da pubblicare.</div>', unsafe_allow_html=True)
 st.markdown("<h2 style='text-align:center;margin-top:-1rem;'>📈</h2>", unsafe_allow_html=True)
 
 # ── UPLOAD ────────────────────────────────────────────────────────────────────
+
 uploaded = st.file_uploader("Carica il tuo file (CSV o Excel)", type=["csv", "xlsx", "xls"])
 
+# ── SAMPLE CSV BADGE ──────────────────────────────────────────────────────────
+# Badge con download del file di esempio, subito sotto il file uploader.
+# L'utente scarica il file e lo trascina nel box qui sopra.
+
+_SAMPLE_PATH = os.path.join(os.path.dirname(__file__), "sample_data.csv")
+
+if os.path.exists(_SAMPLE_PATH):
+    with open(_SAMPLE_PATH, "rb") as _f:
+        _sample_bytes = _f.read()
+
+    _badge_bg     = "#f0f0f0" if light_mode else "#1a1a2e"
+    _badge_border = "#cccccc" if light_mode else "#2e2e4e"
+    _badge_text   = "#333333" if light_mode else "#cccccc"
+    _badge_hint   = "#888888" if light_mode else "#666688"
+
+    st.markdown(
+        f"""
+        <style>
+        .sample-badge-wrap {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 4px 0;
+        }}
+        .sample-badge {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: {_badge_bg};
+            border: 1.5px dashed {_badge_border};
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 0.85rem;
+            color: {_badge_text};
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }}
+        .sample-badge:hover {{
+            border-color: #636EFA;
+            box-shadow: 0 0 0 2px rgba(99,110,250,0.15);
+        }}
+        .sample-badge .icon {{ font-size: 1.1rem; }}
+        .sample-hint {{
+            font-size: 0.78rem;
+            color: {_badge_hint};
+            font-style: italic;
+        }}
+        </style>
+        <div class="sample-badge-wrap">
+            <span class="sample-badge">
+                <span class="icon">📊</span>
+                <strong>sample_data.csv</strong>
+            </span>
+            <span class="sample-hint">← scarica e trascina nel box qui sopra per testare</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.download_button(
+        label="⬇️ Scarica sample_data.csv",
+        data=_sample_bytes,
+        file_name="sample_data.csv",
+        mime="text/csv",
+        key="download_sample",
+    )
+
+# ── STOP SE NESSUN FILE ───────────────────────────────────────────────────────
+
 if not uploaded:
-    st.info("⬆️ Carica un CSV o Excel per iniziare. Oppure testa con il file `sample_data.csv` incluso nel repo.")
+    st.info("⬆️ Carica un CSV o Excel per iniziare. Oppure scarica il file `sample_data.csv` qui sopra e trascinalo nel box.")
     st.stop()
 
 @st.cache_data
@@ -95,9 +167,7 @@ def load_file(f, sheet=None):
 
 is_excel = uploaded.name.lower().endswith((".xlsx", ".xls"))
 sheet_choice = None
-
 if is_excel:
-    # Leggo solo i nomi dei fogli senza caricare i dati
     import openpyxl
     raw_bytes = uploaded.read()
     uploaded.seek(0)
@@ -119,6 +189,7 @@ st.dataframe(df.head(10), use_container_width=True)
 st.caption(f"{df.shape[0]:,} righe · {df.shape[1]} colonne")
 
 # ── DATA QUALITY ──────────────────────────────────────────────────────────────
+
 st.markdown("---")
 st.markdown("### 🔍 Data Quality Check")
 
@@ -129,15 +200,18 @@ checks = []
 checks.append(("Righe nel dataset", f"{df.shape[0]:,}",
                "ok" if df.shape[0] >= 30 else "warn",
                f"< 30 righe: risultati poco affidabili"))
+
 dupes = df.duplicated().sum()
 checks.append(("Righe duplicate", str(dupes),
                "ok" if dupes == 0 else "warn",
                f"{dupes} righe duplicate trovate"))
+
 total_miss = df.isnull().sum().sum()
 pct_miss   = total_miss / df.size * 100
 checks.append(("Valori mancanti", f"{total_miss} ({pct_miss:.1f}%)",
                "ok" if pct_miss == 0 else ("warn" if pct_miss < 10 else "err"),
                f"{pct_miss:.1f}% valori mancanti"))
+
 checks.append(("Colonne numeriche", str(len(numeric_cols)),
                "ok" if len(numeric_cols) >= 2 else "err",
                "Servono almeno 2 colonne numeriche"))
@@ -162,6 +236,7 @@ if total_miss > 0:
         st.dataframe(miss_df, use_container_width=True, hide_index=True)
 
 # ── CONFIGURAZIONE ────────────────────────────────────────────────────────────
+
 st.markdown("---")
 st.markdown("### ⚙️ Configurazione")
 
@@ -171,7 +246,7 @@ with col_cfg1:
     event_col = st.selectbox("🎯 Colonna EVENT (0/1)", numeric_cols, index=min(1, len(numeric_cols)-1))
 with col_cfg2:
     strat_cols = st.multiselect("🎨 Stratificazione (opzionale)",
-                                 [c for c in all_cols if c not in [time_col, event_col]])
+                                [c for c in all_cols if c not in [time_col, event_col]])
 
 with st.expander("🎨 Opzioni grafico"):
     col_o1, col_o2, col_o3 = st.columns(3)
@@ -186,6 +261,7 @@ with st.expander("🎨 Opzioni grafico"):
         xlabel_input = st.text_input("Label asse X", value="Tempo")
 
 # ── VALIDAZIONE ───────────────────────────────────────────────────────────────
+
 errors = []
 if time_col == event_col:
     errors.append("TIME e EVENT non possono essere la stessa colonna.")
@@ -195,12 +271,14 @@ if event_col in df.columns:
     bad_ev = [v for v in df[event_col].dropna().unique() if v not in [0,1]]
     if bad_ev:
         errors.append(f"Colonna EVENT contiene valori non 0/1: {bad_ev[:5]}")
+
 for e in errors:
     st.error(f"❌ {e}")
 if errors:
     st.stop()
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
+
 def compute_hr(df_c, time_col, event_col, strat_col):
     """HR via CoxPH per variabile binaria (2 gruppi)."""
     try:
@@ -208,7 +286,7 @@ def compute_hr(df_c, time_col, event_col, strat_col):
         df_cox[strat_col] = pd.Categorical(df_cox[strat_col]).codes
         cph = CoxPHFitter()
         cph.fit(df_cox, duration_col=time_col, event_col=event_col)
-        hr  = np.exp(cph.params_[strat_col])
+        hr    = np.exp(cph.params_[strat_col])
         ci_low = np.exp(cph.confidence_intervals_.loc[strat_col, "95% lower-bound"])
         ci_hi  = np.exp(cph.confidence_intervals_.loc[strat_col, "95% upper-bound"])
         return hr, ci_low, ci_hi
@@ -227,6 +305,7 @@ def style_axes(ax, light):
     ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
 
 # ── PLOT ──────────────────────────────────────────────────────────────────────
+
 if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container_width=True):
 
     df_clean = df[[time_col, event_col] + strat_cols].dropna()
@@ -237,7 +316,6 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
     T = df_clean[time_col]
     E = df_clean[event_col]
 
-    # ── AT-RISK TABLE setup ────────────────────────────────────────────────────
     if show_at_risk:
         fig, (ax, ax_risk) = plt.subplots(
             2, 1, figsize=(12, 10),
@@ -251,9 +329,9 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
 
     style_axes(ax, light_mode)
 
-    legend_elements = []
-    logrank_results = None
-    kmf_list        = []   # (kmf, grp_label, color) per at-risk
+    legend_elements  = []
+    logrank_results  = None
+    kmf_list         = []
 
     if not strat_cols:
         # ── CURVA SINGOLA ─────────────────────────────────────────────────────
@@ -281,7 +359,7 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
         n_events = int(E.sum())
         legend_elements.append(
             Line2D([0],[0], color=CURR_PALETTE[0], linewidth=2.5,
-                   label=f"Popolazione  n={n_total:,}  eventi={n_events:,}")
+                   label=f"Popolazione n={n_total:,} eventi={n_events:,}")
         )
 
     else:
@@ -318,10 +396,9 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
             e_g = int(E_g.sum())
             legend_elements.append(
                 Line2D([0],[0], color=color, linewidth=2.5,
-                       label=f"{grp}  n={n_g:,}  eventi={e_g:,}")
+                       label=f"{grp} n={n_g:,} eventi={e_g:,}")
             )
 
-        # Log-rank test + HR
         if len(groups) == 2:
             g0, g1 = groups
             res = logrank_test(
@@ -335,20 +412,17 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
             pval_str = f"p = {pval:.4f}" if pval >= 0.0001 else "p < 0.0001"
             sig_str  = "★ Significativo (p<0.05)" if pval < 0.05 else "Non significativo"
 
-            # HR via Cox
             strat_single = strat_cols[0] if len(strat_cols) == 1 else "_strat_"
-            df_for_cox = df_clean.copy()
+            df_for_cox   = df_clean.copy()
             if strat_single == "_strat_":
                 df_for_cox["_strat_cox_"] = df_for_cox["_strat_"]
                 strat_single = "_strat_cox_"
             hr, ci_lo, ci_hi = compute_hr(df_for_cox, time_col, event_col, strat_single)
-
             hr_str = f"HR = {hr:.2f} (95% CI: {ci_lo:.2f}–{ci_hi:.2f})" if hr else ""
 
             stat_text = f"Log-rank test\n{pval_str}\n{sig_str}"
             if hr_str:
                 stat_text += f"\n{hr_str}"
-
             ax.text(0.97, 0.97, stat_text,
                     transform=ax.transAxes, ha="right", va="top",
                     fontsize=9.5, color=COL_TEXT,
@@ -365,7 +439,6 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
                     fontsize=9.5, color=COL_TEXT,
                     bbox=dict(facecolor=BG_BOX, edgecolor=COL_SPINE, boxstyle="round,pad=0.5", alpha=0.9))
 
-    # Voce censure in legenda
     if show_censors:
         legend_elements.append(
             Line2D([0],[0], marker="|", color=COL_SUBTEXT, linewidth=0,
@@ -373,7 +446,6 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
                    label="| = Osservazione censurata")
         )
 
-    # ── LABELS E LEGENDA ──────────────────────────────────────────────────────
     ax.set_xlabel(xlabel_input, fontsize=13, labelpad=10, color=COL_TEXT)
     ax.set_ylabel("Probabilità di sopravvivenza", fontsize=13, labelpad=10, color=COL_TEXT)
     ax.set_title(title_input, fontsize=16, fontweight="bold", color=COL_TEXT, pad=15)
@@ -389,53 +461,47 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
         facecolor=COL_LEG_FC,
     )
 
-    # ── AT-RISK TABLE ─────────────────────────────────────────────────────────
     if show_at_risk:
-        n_groups = max(len(kmf_list), 1)
+        n_groups   = max(len(kmf_list), 1)
         timepoints = np.linspace(T.min(), T.max(), 7).astype(int)
-        xlim = ax.get_xlim()
+        xlim       = ax.get_xlim()
+
         ax_risk.set_xlim(xlim)
         ax_risk.set_ylim(-n_groups - 0.5, 0.5)
         ax_risk.set_facecolor(BG_FIG)
         ax_risk.axis("off")
 
-        # Header riga "Tempo"
         ax_risk.text(-0.01, 0.3, "Tempo →", transform=ax_risk.transAxes,
                      ha="right", va="center", fontsize=8,
                      color=COL_SUBTEXT, style="italic")
+
         for tp in timepoints:
             x_norm = (tp - xlim[0]) / (xlim[1] - xlim[0])
             ax_risk.text(x_norm, 0.95, str(int(tp)),
                          transform=ax_risk.transAxes,
                          ha="center", va="top", fontsize=8, color=COL_SUBTEXT)
 
-        # Righe gruppi
         for row_idx, (kmf_obj, grp_lbl, color) in enumerate(kmf_list):
             y_norm = 1.0 - (row_idx + 1) * (1.0 / (n_groups + 1))
-            # Label gruppo a sinistra
             ax_risk.text(-0.01, y_norm, grp_lbl[:14],
                          transform=ax_risk.transAxes,
                          ha="right", va="center", fontsize=8,
                          color=color, fontweight="600")
-            # Conteggi
             for tp in timepoints:
                 n_at_risk = int((kmf_obj.durations >= tp).sum())
-                x_norm = (tp - xlim[0]) / (xlim[1] - xlim[0])
+                x_norm    = (tp - xlim[0]) / (xlim[1] - xlim[0])
                 ax_risk.text(x_norm, y_norm, str(n_at_risk),
                              transform=ax_risk.transAxes,
                              ha="center", va="center", fontsize=9,
                              color=color, fontweight="700")
 
-    # Watermark
     ax.text(0.01, 0.01, "SurvivaLab", transform=ax.transAxes,
             fontsize=8, color=COL_WM, va="bottom")
 
     plt.tight_layout()
 
-    # ── OUTPUT ────────────────────────────────────────────────────────────────
     st.pyplot(fig, use_container_width=True)
 
-    # Statistiche
     st.markdown("#### 📊 Statistiche descrittive")
     stats_rows = [{
         "Gruppo": "Totale",
@@ -446,7 +512,6 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
         "T max": f"{T.max():.1f}",
         "T mediano": f"{T.median():.1f}",
     }]
-
     if strat_cols:
         for kmf_obj, grp_lbl, _ in kmf_list:
             mask = df_clean["_strat_"] == grp_lbl
@@ -461,10 +526,8 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
                 "T max": f"{T_g.max():.1f}",
                 "T mediano": f"{T_g.median():.1f}",
             })
-
     st.dataframe(pd.DataFrame(stats_rows), use_container_width=True, hide_index=True)
 
-    # Download
     buf = BytesIO()
     fig.savefig(buf, format="png", dpi=180, bbox_inches="tight", facecolor=BG_FIG)
     buf.seek(0)
@@ -476,6 +539,7 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
     plt.close(fig)
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
+
 st.markdown("---")
 st.markdown(
     f'<p style="text-align:center;color:{footer_col};font-size:0.9rem;">'
