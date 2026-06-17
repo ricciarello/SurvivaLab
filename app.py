@@ -376,16 +376,16 @@ if st.button("📈 Genera curva di sopravvivenza", type="primary", use_container
                 ax.axvline(med, color=CURR_PALETTE[0], linestyle=":", linewidth=1.8, alpha=0.8)
                 ax.axhline(0.5, color=CURR_PALETTE[0], linestyle=":", linewidth=1.2, alpha=0.4,
                            xmin=0, xmax=med / ax.get_xlim()[1] if ax.get_xlim()[1] > 0 else 0.5)
-                # ax.text(med + (T.max() * 0.01), 0.53,
-                #         f"Mediana = {med:.1f}",
-                #         color=CURR_PALETTE[0], fontsize=9, va="bottom",
-                #         bbox=dict(facecolor=BG_BOX, edgecolor="none", alpha=0.7, pad=2))
-                ax.annotate(
-                      f"Med {grp} = {med:.1f}",
-                      xy=(med, 0.5 + 0.04 * idx),
-                      xycoords="data",
-                      color=color, fontsize=8, va="bottom",
-                      bbox=dict(facecolor=BG_BOX, edgecolor="none", alpha=0.7, pad=2))
+                ax.text(med + (T.max() * 0.01), 0.53,
+                        f"Mediana = {med:.1f}",
+                        color=CURR_PALETTE[0], fontsize=9, va="bottom",
+                        bbox=dict(facecolor=BG_BOX, edgecolor="none", alpha=0.7, pad=2))
+                # ax.annotate(
+                #       f"Med {grp} = {med:.1f}",
+                #       xy=(med, 0.5 + 0.04 * idx),
+                #       xycoords="data",
+                #       color=color, fontsize=8, va="bottom",
+                #       bbox=dict(facecolor=BG_BOX, edgecolor="none", alpha=0.7, pad=2))
 
         n_total  = len(T)
         n_events = int(E.sum())
