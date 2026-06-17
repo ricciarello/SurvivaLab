@@ -159,7 +159,7 @@ if os.path.exists(_SAMPLE_PATH):
             <a class="dl-link" href="data:text/csv;base64,{_b64}" download="sample_data.csv">
                 ⬇️ Scarica
             </a>
-            <span class="sample-hint">← trascinalo nel box qui sopra per testare</span>
+            <span class="sample-hint">← scarica e trascinalo nel box qui sopra per testare</span>
         </div>
         """,
         unsafe_allow_html=True,
