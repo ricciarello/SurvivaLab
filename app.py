@@ -74,7 +74,7 @@ html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
 """, unsafe_allow_html=True)
 
 # Hero
-st.markdown('<div class="hero-title">SurvivaLab 📈</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-title">SurvivaLab</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="hero-desc">Carica un CSV · Scegli le colonne · Ottieni curve di sopravvivenza pronte da pubblicare.</div>', unsafe_allow_html=True)
 st.markdown("<h2 style='text-align:center;margin-top:-1rem;'>📈</h2>", unsafe_allow_html=True)
 
